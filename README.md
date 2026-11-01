@@ -22,8 +22,36 @@
   <a href="https://www.linkedin.com/in/akash-sudhir-mhatre/"><img src="https://img.shields.io/badge/LinkedIn-connect-0A66C2?style=flat-square&logo=linkedin&logoColor=white&labelColor=2B2A28" alt="Connect on LinkedIn"></a>
 </p>
 
+<p align="center">
+  <a href="#about"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-about.svg">
+    <img src="assets/light/tab-about.svg" height="40" alt="About">
+  </picture></a>
+  <a href="#toolbox"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-toolbox.svg">
+    <img src="assets/light/tab-toolbox.svg" height="40" alt="Toolbox">
+  </picture></a>
+  <a href="#projects"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-projects.svg">
+    <img src="assets/light/tab-projects.svg" height="40" alt="Projects">
+  </picture></a>
+  <a href="#achievements"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-achievements.svg">
+    <img src="assets/light/tab-achievements.svg" height="40" alt="Wins">
+  </picture></a>
+  <a href="#activity"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-activity.svg">
+    <img src="assets/light/tab-activity.svg" height="40" alt="Activity">
+  </picture></a>
+  <a href="#contact"><picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/dark/tab-contact.svg">
+    <img src="assets/light/tab-contact.svg" height="40" alt="Contact">
+  </picture></a>
+</p>
+
 <br>
 
+<a name="about"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-about.svg">
   <img src="assets/light/section-about.svg" width="100%" alt="01. About me">
@@ -43,6 +71,7 @@ const akash = {
 };
 ```
 
+<a name="toolbox"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-toolbox.svg">
   <img src="assets/light/section-toolbox.svg" width="100%" alt="02. Toolbox">
@@ -53,6 +82,7 @@ const akash = {
   <img src="assets/light/toolbox.svg" width="100%" alt="Languages: JavaScript, TypeScript, Python, Java, Rust, HTML5, CSS3, Sass. Frontend: Vue.js, Quasar, React, Next.js, Tailwind CSS, Three.js, Vite, Capacitor. Backend: Node.js, Flask, Django, SQLAlchemy, Cloudflare Workers. Data: PostgreSQL, MySQL, MongoDB, Redis, Supabase, Firebase, Apache Spark. Cloud and ops: AWS, Docker, Nginx, Linux, Vercel, GitHub Actions. Tools: Git, GitHub, GitLab, VS Code, Figma, Android Studio, Vitest, Playwright.">
 </picture>
 
+<a name="projects"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-projects.svg">
   <img src="assets/light/section-projects.svg" width="100%" alt="03. Things I've built">
@@ -113,6 +143,7 @@ const akash = {
 | **Secret Santa** | Secret Santa gift-exchange app | Vue | [code](https://github.com/Akashmhatredev/Secret-Santa) |
 | **Birthday** | A birthday web page | Vue | [code](https://github.com/Akashmhatredev/Birthday) |
 
+<a name="achievements"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-achievements.svg">
   <img src="assets/light/section-achievements.svg" width="100%" alt="04. Achievements">
@@ -127,6 +158,7 @@ const akash = {
 - **Hacktoberfest 2024:** two merged pull requests to an open-source chat component library, [a button element](https://github.com/akash-melkeri/hacktoberfest24-app-components/pull/8) and [three more button variants](https://github.com/akash-melkeri/hacktoberfest24-app-components/pull/10).
 - **Shipped:** six projects live on Vercel, from interactive courses to multiplayer games.
 
+<a name="activity"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-activity.svg">
   <img src="assets/light/section-activity.svg" width="100%" alt="05. Contributions">
@@ -153,6 +185,7 @@ const akash = {
   <img src="https://raw.githubusercontent.com/Akashmhatredev/Akashmhatredev/output/light/snake.svg" width="100%" alt="A snake eating my contribution graph.">
 </picture>
 
+<a name="contact"></a>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="assets/dark/section-contact.svg">
   <img src="assets/light/section-contact.svg" width="100%" alt="06. Let's talk">
