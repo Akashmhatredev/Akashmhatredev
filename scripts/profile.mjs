@@ -2,6 +2,16 @@
 
 export const user = 'Akashmhatredev';
 
+// README sections, in order. `tab` is the label on the clickable nav tab.
+export const sections = [
+  { id: 'about', title: 'About me', tab: 'About', note: 'the short version' },
+  { id: 'toolbox', title: 'Toolbox', tab: 'Toolbox', note: 'languages & tools I use' },
+  { id: 'projects', title: "Things I've built", tab: 'Projects', note: 'click a card to open it' },
+  { id: 'achievements', title: 'Achievements', tab: 'Wins', note: 'small wins, proudly framed' },
+  { id: 'activity', title: 'Contributions', tab: 'Activity', note: 'auto-updated twice a day' },
+  { id: 'contact', title: "Let's talk", tab: 'Contact', note: 'say hi, I reply' },
+];
+
 export const links = [
   { id: 'linkedin', label: 'LinkedIn', color: '#0A66C2', href: 'https://www.linkedin.com/in/akash-sudhir-mhatre/' },
   { id: 'email', label: 'Email me', color: '#D14836', href: 'mailto:mhatreakash2308@gmail.com' },
