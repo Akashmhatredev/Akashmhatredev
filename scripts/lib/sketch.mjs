@@ -63,6 +63,57 @@ export function mulberry32(seed) {
 const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const r1 = (n) => Math.round(n * 10) / 10;
 
+// Shared motion vocabulary. Everything sits behind prefers-reduced-motion,
+// and the un-animated state is always the finished drawing.
+const MOTION_CSS = `
+.dr [pathLength]{stroke-dasharray:1 1;animation:draw var(--t,1s) cubic-bezier(.55,.1,.35,1) var(--d,0s) both}
+.fade{animation:fade var(--t,.6s) ease var(--d,0s) both}
+.pop{animation:pop var(--t,.55s) cubic-bezier(.3,1.6,.5,1) var(--d,0s) both}
+.swipe{animation:swipe var(--t,.5s) cubic-bezier(.5,0,.3,1) var(--d,0s) both;transform-origin:0 50%}
+.rise{animation:rise var(--t,.6s) ease-out var(--d,0s) both}
+.drop{animation:drop var(--t,.7s) cubic-bezier(.3,1.4,.5,1) var(--d,0s) both}
+.loop{animation:var(--a) var(--t,3s) ease-in-out var(--d,0s) infinite both}
+.pop,.swipe,.loop,.drop{transform-box:fill-box}
+.pop,.loop{transform-origin:50% 50%}
+@keyframes draw{from{stroke-dashoffset:1}to{stroke-dashoffset:0}}
+@keyframes fade{from{opacity:0}}
+@keyframes pop{from{opacity:0;transform:scale(.3)}}
+@keyframes swipe{from{transform:scaleX(0)}}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+@keyframes drop{from{opacity:0;transform:translateY(-24px) rotate(-6deg)}}
+@keyframes bob{50%{transform:translateY(-4px)}}
+@keyframes hop{0%,62%,100%{transform:none}72%{transform:translateY(-9px)}82%{transform:scale(1.1,.9)}90%{transform:none}}
+@keyframes wave{0%,6%,100%{transform:none}3%{transform:translateY(-6px)}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-9deg)}75%{transform:rotate(9deg)}}
+@keyframes swing{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg)}}
+@keyframes flag{0%,100%{transform:none}50%{transform:scaleX(.75) skewY(-8deg)}}
+@keyframes blip{0%,100%{opacity:1}50%{opacity:.15}}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes steam{0%{opacity:0;transform:translateY(5px)}40%{opacity:1}100%{opacity:0;transform:translateY(-12px)}}
+@keyframes twinkle{0%,100%{opacity:.2;transform:scale(.5)}50%{opacity:1;transform:scale(1.1) rotate(45deg)}}
+@keyframes throb{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.12) rotate(10deg)}}
+@keyframes shake{0%,100%{transform:none}20%{transform:translate(-1.5px,1px) rotate(-4deg)}40%{transform:translate(1.5px,-1px) rotate(4deg)}60%{transform:translate(-1px,0)}}
+@keyframes nudge{0%,100%{transform:none}50%{transform:translate(3px,-3px)}}
+@keyframes flicker{0%,100%{transform:none}30%{transform:scale(.9,1.12) skewX(4deg)}60%{transform:scale(1.06,.94) skewX(-4deg)}}
+@keyframes flash{0%,40%,52%,64%,100%{opacity:1}46%,58%{opacity:.2}}
+@keyframes flip{0%,30%{transform:none}70%,100%{transform:scaleX(-1)}}
+@keyframes pulse{0%,100%{transform:none}50%{transform:scale(1.18)}}
+@keyframes sweep{0%,55%{transform:translateX(-130px)}100%{transform:translateX(130px)}}
+@keyframes swim{0%,100%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+`.replace(/\n/g, '');
+
+// Smooth Catmull-Rom curve through points, for motion paths.
+export function smoothPath(pts) {
+  let d = `M ${pts[0][0]} ${pts[0][1]}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const [p0, p1, p2, p3] = [pts[i - 1] ?? pts[i], pts[i], pts[i + 1], pts[i + 2] ?? pts[i + 1]];
+    const c1 = [p1[0] + (p2[0] - p0[0]) / 6, p1[1] + (p2[1] - p0[1]) / 6];
+    const c2 = [p2[0] - (p3[0] - p1[0]) / 6, p2[1] - (p3[1] - p1[1]) / 6];
+    d += ` C ${r1(c1[0])} ${r1(c1[1])} ${r1(c2[0])} ${r1(c2[1])} ${p2[0]} ${p2[1]}`;
+  }
+  return d;
+}
+
 export class Sketch {
   constructor({ width, height, theme, seed = 1 }) {
     this.w = width;
@@ -74,6 +125,9 @@ export class Sketch {
     this.defs = [];
     this.glyphs = new Map();
     this.body = [];
+    this.css = [];
+    this.uid = 0;
+    this.dashing = false;
   }
 
   opts(o = {}) {
@@ -91,8 +145,9 @@ export class Sketch {
   draw(drawable, extra = '') {
     for (const p of this.gen.toPaths(drawable)) {
       const fill = p.fill && p.fill !== 'none' ? p.fill : 'none';
+      const len = this.dashing && p.stroke !== 'none' ? ' pathLength="1"' : '';
       this.body.push(
-        `<path d="${p.d}" fill="${fill}" stroke="${p.stroke}" stroke-width="${p.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${extra}/>`,
+        `<path d="${p.d}" fill="${fill}" stroke="${p.stroke}" stroke-width="${p.strokeWidth}" stroke-linecap="round" stroke-linejoin="round"${len}${extra}/>`,
       );
     }
     return this;
@@ -103,6 +158,74 @@ export class Sketch {
     fn();
     this.body.push('</g>');
     return this;
+  }
+
+  // ------------------------------------------------------------ animation
+  // CSS classes (see MOTION_CSS) driven by --d (delay), --t (duration) and,
+  // for looping groups, --a (keyframes name).
+  g({ cls, d, t, a, origin, attrs } = {}, fn) {
+    const style = [
+      d != null && `--d:${d}s`,
+      t != null && `--t:${t}s`,
+      a && `--a:${a}`,
+      origin && `transform-origin:${origin}`,
+    ].filter(Boolean).join(';');
+    this.body.push(`<g${cls ? ` class="${cls}"` : ''}${style ? ` style="${style}"` : ''}${attrs ? ` ${attrs}` : ''}>`);
+    fn();
+    this.body.push('</g>');
+    return this;
+  }
+
+  loop(a, t, d, fn, origin) {
+    return this.g({ cls: 'loop', a, t, d, origin }, fn);
+  }
+
+  // Pencil strokes that draw themselves on.
+  drawIn(d, t, fn) {
+    const prev = this.dashing;
+    this.g({ cls: 'dr', d, t }, () => {
+      this.dashing = true;
+      fn();
+      this.dashing = prev;
+    });
+    return this;
+  }
+
+  // Left-to-right reveal, like ink going down. The clip is SMIL (so it also
+  // plays in browsers that skip CSS animation inside clip paths), but it is
+  // only attached through CSS, so reduced-motion viewers just see the text.
+  write([x, y, w, h], d, t, fn) {
+    const id = `c${++this.uid}`;
+    const k = (d / (d + t)).toFixed(3);
+    this.defs.push(
+      `<clipPath id="${id}"><rect x="${r1(x)}" y="${r1(y)}" width="${r1(w)}" height="${r1(h)}"><animate attributeName="width" values="0;0;${r1(w)}" keyTimes="0;${k};1" dur="${r1(d + t)}s" fill="freeze"/></rect></clipPath>`,
+    );
+    this.css.push(`.${id}{clip-path:url(#${id})}`);
+    this.body.push(`<g class="${id}">`);
+    fn();
+    this.body.push('</g>');
+    return this;
+  }
+
+  writeText(str, x, y, opts = {}, d = 0, t = 0.6) {
+    const size = opts.size ?? 16;
+    const w = this.measure(str, opts.font ?? 'hand', size);
+    const x0 = opts.anchor === 'middle' ? x - w / 2 : opts.anchor === 'end' ? x - w : x;
+    let out;
+    this.write([x0 - 6, y - size * 1.15, w + 12, size * 1.6], d, t, () => (out = this.text(str, x, y, opts)));
+    return out;
+  }
+
+  // "Line boil": the hand-drawn jitter of animated sketches.
+  boil(fn, scale = 2) {
+    const id = `boil${String(scale).replace('.', '')}`;
+    if (!this.defs.some((def) => def.includes(`id="${id}"`))) {
+      this.defs.push(
+        `<filter id="${id}" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency="0.035" numOctaves="2" seed="1"><animate attributeName="seed" values="1;2;3;4" dur="0.5s" calcMode="discrete" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="${scale}"/></filter>`,
+      );
+    }
+    if (!this.css.includes(`.${id}{filter:url(#${id})}`)) this.css.push(`.${id}{filter:url(#${id})}`);
+    return this.group(`class="${id}"`, fn);
   }
 
   raw(svg) {
@@ -237,6 +360,7 @@ export class Sketch {
     return [
       `<svg xmlns="http://www.w3.org/2000/svg" width="${this.w}" height="${this.h}" viewBox="0 0 ${this.w} ${this.h}" role="img" aria-labelledby="t d">`,
       `<title id="t">${esc(title)}</title><desc id="d">${esc(desc)}</desc>`,
+      `<style>@media (prefers-reduced-motion:no-preference){${MOTION_CSS}${this.css.join('')}}</style>`,
       `<defs>${this.defs.join('')}${[...this.glyphs].map(([id, d]) => `<path id="${id}" d="${d}"/>`).join('')}</defs>`,
       ...this.body,
       '</svg>',
